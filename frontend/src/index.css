@@ -36,7 +36,8 @@ body {
 .navbar-brand { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px; }
 .navbar-user { display: flex; align-items: center; gap: 1rem; font-size: 0.875rem; }
 .layout { display: flex; min-height: calc(100vh - 60px); }
-.sidebar { width: 220px; background: white; border-right: 1px solid #e5e7eb; padding: 1rem 0; }
+/* .sidebar { width: 220px; background: white; border-right: 1px solid #e5e7eb; padding: 1rem 0; } */
+.sidebar { width: 220px; background: white; border-right: 1px solid #e5e7eb; padding: 1rem 0; position: relative; min-height: calc(100vh - 60px); }
 .sidebar a { display: block; padding: 0.65rem 1.5rem; color: #374151; text-decoration: none; font-size: 0.875rem; transition: background 0.2s; }
 .sidebar a:hover, .sidebar a.active { background: #eff6ff; color: #3b82f6; border-right: 3px solid #3b82f6; }
 .main-content { flex: 1; padding: 2rem; overflow-y: auto; }

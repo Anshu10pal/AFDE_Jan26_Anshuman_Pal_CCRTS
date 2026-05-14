@@ -1,3 +1,5 @@
+import { useAuth } from '../context/AuthContext';
+import AgentWorkloadBoard from '../components/AgentWorkloadBoard';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -5,6 +7,9 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 import API from '../services/api';
+import SLAHealthBoard from '../components/SLAHealthBoard';
+// Inside return, after leaderboard:
+<SLAHealthBoard />
 
 const STATUS_STYLES = {
   'Open':                      { bg: '#dbeafe', color: '#1d4ed8' },
@@ -61,6 +66,7 @@ export default function Dashboard() {
   const [modalLoading, setModalLoading]       = useState(false);
   const [slaModal, setSlaModal]     = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     API.get('/api/dashboard/stats').then(r => setStats(r.data));
@@ -279,6 +285,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <AgentWorkloadBoard userRole={user?.role} />
     </div>
   );
 }

@@ -37,6 +37,8 @@ def get_complaints(
     priority: Optional[str] = Query(None),
     category_id: Optional[int] = Query(None),
     search: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -49,11 +51,23 @@ def get_complaints(
         query = query.filter(models.Complaint.priority == priority)
     if category_id:
         query = query.filter(models.Complaint.category_id == category_id)
+    # if search:
+    #     query = query.filter(
+    #         models.Complaint.title.contains(search) |
+    #         models.Complaint.description.contains(search)
+    #     )
     if search:
         query = query.filter(
             models.Complaint.title.contains(search) |
             models.Complaint.description.contains(search)
         )
+    if category_id:
+        query = query.filter(models.Complaint.category_id == category_id)
+    if date_from:
+        query = query.filter(models.Complaint.created_at >= date_from)
+    if date_to:
+        query = query.filter(models.Complaint.created_at <= date_to + " 23:59:59")
+
     return query.order_by(models.Complaint.created_at.desc()).all()
 
 @router.get("/{complaint_id}", response_model=schemas.ComplaintOut)
@@ -86,9 +100,12 @@ def update_complaint(
             updated_by=current_user.id,
             old_status=old_status,
             new_status=updates.status,
-            comment=f"Status updated by {current_user.name}"
+            comment=f"Status updated by {current_user.name}",
+            resolution_note=updates.resolution_note
         )
         db.add(history)
+    if updates.resolution_note:
+        complaint.resolution_note = updates.resolution_note
     db.commit()
     db.refresh(complaint)
     return complaint
@@ -117,3 +134,37 @@ def get_complaint_history(
     return db.query(models.ComplaintHistory).filter(
         models.ComplaintHistory.complaint_id == complaint_id
     ).order_by(models.ComplaintHistory.updated_at.desc()).all()
+
+@router.patch("/{complaint_id}/assign")
+def assign_complaint(
+    complaint_id: int,
+    agent_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role not in [models.RoleEnum.admin, models.RoleEnum.supervisor]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    complaint = db.query(models.Complaint).filter(
+        models.Complaint.id == complaint_id
+    ).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    agent = db.query(models.User).filter(
+        models.User.id == agent_id,
+        models.User.role == models.RoleEnum.agent
+    ).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    old_status = complaint.status.value
+    complaint.assigned_to = agent_id
+    complaint.status = models.StatusEnum.assigned
+    db.add(models.ComplaintHistory(
+        complaint_id=complaint_id,
+        updated_by=current_user.id,
+        old_status=old_status,
+        new_status="Assigned",
+        comment=f"Assigned to {agent.name} by {current_user.name}"
+    ))
+    db.commit()
+    db.refresh(complaint)
+    return {"message": f"Complaint assigned to {agent.name}"}

@@ -52,6 +52,7 @@ class ComplaintUpdate(BaseModel):
     priority: Optional[PriorityEnum] = None
     status: Optional[StatusEnum] = None
     assigned_to: Optional[int] = None
+    resolution_note: Optional[str] = None
 
 class ComplaintOut(BaseModel):
     id: int
@@ -62,18 +63,21 @@ class ComplaintOut(BaseModel):
     status: StatusEnum
     created_at: datetime
     updated_at: datetime
+    assigned_to: Optional[int] = None
     customer: Optional[UserOut]
     category: Optional[CategoryOut]
+    agent: Optional[UserOut] = None
     class Config:
         from_attributes = True
 
 # --- History Schemas ---
 class HistoryOut(BaseModel):
-    id: int
-    old_status: str
-    new_status: str
-    comment: Optional[str]
-    updated_at: datetime
+    id:              int
+    old_status:      str
+    new_status:      str
+    comment:         Optional[str]
+    resolution_note: Optional[str] = None
+    updated_at:      datetime
     class Config:
         from_attributes = True
 
